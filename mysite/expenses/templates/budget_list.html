@@ -1,0 +1,427 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Budgets — BudgetBee</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f1117;
+    --sidebar: #151820;
+    --card: #1a1e2a;
+    --card2: #1f2333;
+    --border: #252a3a;
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --accent: #e8b84b;
+    --accent-dim: rgba(232,184,75,0.12);
+    --green: #34d399;
+    --red: #f87171;
+    --yellow: #fbbf24;
+    --input-bg: #12151f;
+    --radius: 12px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  .sidebar {
+    width: 220px;
+    min-height: 100vh;
+    background: var(--sidebar);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 0;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 20px 28px;
+    font-weight: 600;
+    font-size: 16px;
+    letter-spacing: -0.3px;
+  }
+
+  .logo-icon {
+    width: 34px; height: 34px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px;
+  }
+
+  .sidebar-section { padding: 0 12px; margin-bottom: 24px; }
+  .sidebar-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0 8px 10px;
+  }
+
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13.5px;
+    font-weight: 500;
+    transition: all 0.15s;
+  }
+
+  .nav-link:hover { background: var(--card); color: var(--text); }
+  .nav-link.active { background: var(--accent-dim); color: var(--accent); }
+  .nav-link .icon { font-size: 16px; width: 20px; text-align: center; }
+
+  .sidebar-footer { margin-top: auto; padding: 0 12px; }
+
+  .main { margin-left: 220px; flex: 1; padding: 40px 48px; }
+
+  .page-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .page-header h1 {
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+  }
+
+  .page-header p { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+  .btn {
+    padding: 9px 20px;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    transition: opacity 0.15s;
+    display: inline-flex; align-items: center; gap: 7px;
+  }
+
+  .btn-primary { background: var(--accent); color: #111; }
+  .btn-primary:hover { opacity: 0.88; }
+
+  /* Month Selector */
+  .month-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 20px;
+    margin-bottom: 24px;
+  }
+
+  .month-bar label { font-size: 12.5px; color: var(--muted); font-weight: 500; }
+
+  .month-bar select {
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13.5px;
+    padding: 7px 12px;
+    outline: none;
+    cursor: pointer;
+  }
+
+  .month-bar select:focus { border-color: var(--accent); }
+
+  .month-bar .btn-sm {
+    padding: 7px 16px;
+    font-size: 13px;
+    border-radius: 7px;
+    background: var(--accent);
+    color: #111;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  /* Budget Grid */
+  .budget-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+  }
+
+  .budget-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+  }
+
+  .budget-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+  }
+
+  .budget-cat {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .budget-icon {
+    width: 38px; height: 38px;
+    border-radius: 9px;
+    background: var(--card2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+
+  .budget-name { font-weight: 600; font-size: 15px; }
+  .budget-period { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .budget-delete {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.15s;
+  }
+  .budget-delete:hover { background: rgba(248,113,113,0.1); color: var(--red); }
+
+  /* Progress */
+  .budget-amounts {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .budget-amounts strong { color: var(--text); font-family: 'DM Mono', monospace; }
+
+  .progress-bar {
+    height: 6px;
+    background: var(--card2);
+    border-radius: 99px;
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.5s ease;
+  }
+
+  .fill-success { background: var(--green); }
+  .fill-warning { background: var(--yellow); }
+  .fill-danger { background: var(--red); }
+
+  .budget-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+  }
+
+  .badge {
+    padding: 3px 8px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .badge-success { background: rgba(52,211,153,0.12); color: var(--green); }
+  .badge-warning { background: rgba(251,191,36,0.12); color: var(--yellow); }
+  .badge-danger { background: rgba(248,113,113,0.12); color: var(--red); }
+
+  .remaining { color: var(--muted); }
+  .remaining strong { color: var(--text); font-family: 'DM Mono', monospace; font-size: 12px; }
+
+  /* Empty */
+  .empty-state {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 60px 40px;
+    text-align: center;
+    color: var(--muted);
+  }
+
+  .empty-state .emoji { font-size: 48px; display: block; margin-bottom: 16px; }
+  .empty-state h3 { color: var(--text); font-size: 17px; margin-bottom: 6px; }
+  .empty-state p { font-size: 13px; margin-bottom: 20px; }
+
+  /* Messages */
+  .messages { margin-bottom: 20px; }
+  .message {
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 8px;
+    background: var(--card2);
+    border-left: 3px solid var(--green);
+    color: var(--text);
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">💰</div>
+    <span>Budget<strong>Bee</strong></span>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label">Main</div>
+    <a href="{% url 'dashboard' %}" class="nav-link"><span class="icon">📊</span> Dashboard</a>
+    <a href="{% url 'expense_list' %}" class="nav-link"><span class="icon">💸</span> Transactions</a>
+    <a href="{% url 'expense_add' %}" class="nav-link"><span class="icon">➕</span> Add Transaction</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label">Manage</div>
+    <a href="{% url 'budget_list' %}" class="nav-link active"><span class="icon">🎯</span> Budgets</a>
+    <a href="{% url 'category_list' %}" class="nav-link"><span class="icon">🏷️</span> Categories</a>
+    <a href="{% url 'reports' %}" class="nav-link"><span class="icon">📈</span> Reports</a>
+  </div>
+
+  <div class="sidebar-footer">
+    <form method="POST" action="{% url 'logout' %}">
+  {% csrf_token %}
+  <button type="submit" class="nav-link" style="background:none;border:none;width:100%;text-align:left;">
+    🚪 Sign out
+  </button>
+</form>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="page-top">
+    <div class="page-header">
+      <h1>Budgets</h1>
+      <p>Track your spending limits by category.</p>
+    </div>
+    <a href="{% url 'budget_add' %}" class="btn btn-primary">+ Set Budget</a>
+  </div>
+
+  {% if messages %}
+  <div class="messages">
+    {% for msg in messages %}
+    <div class="message">{{ msg }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Month Picker -->
+  <form method="get" class="month-bar">
+    <label>Month</label>
+    <select name="month">
+      {% for m in months %}
+      <option value="{{ m.month }}" {% if m.month == month.month %}selected{% endif %}>
+          {{ m|date:"F" }}
+      </option>
+      {% endfor %}
+    </select>
+    <label>Year</label>
+    <select name="year">
+      {% for y in years %}
+      <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn-sm">View</button>
+  </form>
+
+  {% if budget_data %}
+  <div class="budget-grid">
+    {% for item in budget_data %}
+    <div class="budget-card">
+      <div class="budget-card-top">
+        <div class="budget-cat">
+          <div class="budget-icon">{{ item.budget.category.icon|default:"🎯" }}</div>
+          <div>
+            <div class="budget-name">{{ item.budget.category.name|default:"Overall" }}</div>
+            <div class="budget-period">{{ month|date:"F" }} {{ year }}</div>
+          </div>
+        </div>
+        <form method="post" action="{% url 'budget_delete' item.budget.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="budget-delete" title="Remove budget">✕</button>
+        </form>
+      </div>
+
+      <div class="budget-amounts">
+        <span>
+        Spent:
+        <strong>
+            {% if item.spent == 0 %}
+            <span style="color:#6b7280;">₹0</span>
+            {% else %}
+            ₹{{ item.spent|floatformat:0 }}
+            {% endif %}
+        </strong>
+        </span>
+        <span>Limit: <strong>₹{{ item.budget.amount|floatformat:0 }}</strong></span>
+      </div>
+
+      <div class="progress-bar">
+        <div class="progress-fill fill-{{ item.status }}" style="width: {{ item.pct }}%;"></div>
+      </div>
+
+      <div class="budget-meta">
+        <span class="badge badge-{{ item.status }}">{{ item.pct }}% used</span>
+        <span class="remaining">
+          {% if item.remaining >= 0 %}
+          ₹<strong>{{ item.remaining|floatformat:0 }}</strong> left
+          {% else %}
+          <span style="color:var(--red);">₹{{ item.remaining|floatformat:0|slice:"1:" }} over</span>
+          {% endif %}
+        </span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="empty-state">
+    <span class="emoji">🎯</span>
+    <h3>No budgets set</h3>
+    <p>Set a budget to track your spending limits for this month.</p>
+    <a href="{% url 'budget_add' %}" class="btn btn-primary">Set Your First Budget</a>
+  </div>
+  {% endif %}
+</main>
+
+</body>
+</html>

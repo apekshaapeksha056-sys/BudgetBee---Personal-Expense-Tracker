@@ -1,0 +1,343 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Categories — BudgetBee</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f1117;
+    --sidebar: #151820;
+    --card: #1a1e2a;
+    --card2: #1f2333;
+    --border: #252a3a;
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --accent: #e8b84b;
+    --accent-dim: rgba(232,184,75,0.12);
+    --green: #34d399;
+    --red: #f87171;
+    --input-bg: #12151f;
+    --radius: 12px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  .sidebar {
+    width: 220px;
+    min-height: 100vh;
+    background: var(--sidebar);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 0;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 20px 28px;
+    font-weight: 600;
+    font-size: 16px;
+  }
+
+  .logo-icon {
+    width: 34px; height: 34px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px;
+  }
+
+  .sidebar-section { padding: 0 12px; margin-bottom: 24px; }
+  .sidebar-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0 8px 10px;
+  }
+
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13.5px;
+    font-weight: 500;
+    transition: all 0.15s;
+  }
+
+  .nav-link:hover { background: var(--card); color: var(--text); }
+  .nav-link.active { background: var(--accent-dim); color: var(--accent); }
+  .nav-link .icon { font-size: 16px; width: 20px; text-align: center; }
+
+  .sidebar-footer { margin-top: auto; padding: 0 12px; }
+
+  .main { margin-left: 220px; flex: 1; padding: 40px 48px; }
+
+  .page-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .page-header h1 { font-size: 26px; font-weight: 600; letter-spacing: -0.5px; }
+  .page-header p { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+  .btn {
+    padding: 9px 20px;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    transition: opacity 0.15s;
+    display: inline-flex; align-items: center; gap: 7px;
+  }
+
+  .btn-primary { background: var(--accent); color: #111; }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12.5px;
+    padding: 6px 12px;
+  }
+  .btn-ghost:hover { color: var(--text); border-color: var(--text); }
+  .btn-danger {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--muted);
+    font-size: 12.5px;
+    padding: 6px 12px;
+  }
+  .btn-danger:hover { background: rgba(248,113,113,0.1); color: var(--red); }
+
+  /* Category Table */
+  .cat-table-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead th {
+    padding: 13px 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.12s;
+  }
+
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--card2); }
+
+  td {
+    padding: 14px 20px;
+    vertical-align: middle;
+    font-size: 13.5px;
+  }
+
+  /* Color Dot */
+  .cat-swatch {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 2px;
+    flex-shrink: 0;
+  }
+
+  .cat-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .cat-icon-box {
+    width: 36px; height: 36px;
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    background: var(--card2);
+  }
+
+  .cat-label { font-weight: 500; }
+
+  .total-amount {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .total-amount.has-value { color: var(--text); }
+
+  .actions { display: flex; gap: 6px; justify-content: flex-end; }
+
+  /* Empty */
+  .empty-state {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 60px 40px;
+    text-align: center;
+    color: var(--muted);
+  }
+
+  .empty-state .emoji { font-size: 48px; display: block; margin-bottom: 16px; }
+  .empty-state h3 { color: var(--text); font-size: 17px; margin-bottom: 6px; }
+  .empty-state p { font-size: 13px; margin-bottom: 20px; }
+
+  /* Messages */
+  .messages { margin-bottom: 20px; }
+  .message {
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 8px;
+    background: var(--card2);
+    border-left: 3px solid var(--green);
+    color: var(--text);
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">💰</div>
+    <span>Budget<strong>Bee</strong></span>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label">Main</div>
+    <a href="{% url 'dashboard' %}" class="nav-link"><span class="icon">📊</span> Dashboard</a>
+    <a href="{% url 'expense_list' %}" class="nav-link"><span class="icon">💸</span> Transactions</a>
+    <a href="{% url 'expense_add' %}" class="nav-link"><span class="icon">➕</span> Add Transaction</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label">Manage</div>
+    <a href="{% url 'budget_list' %}" class="nav-link"><span class="icon">🎯</span> Budgets</a>
+    <a href="{% url 'category_list' %}" class="nav-link active"><span class="icon">🏷️</span> Categories</a>
+    <a href="{% url 'reports' %}" class="nav-link"><span class="icon">📈</span> Reports</a>
+  </div>
+
+  <div class="sidebar-footer">
+    <form method="POST" action="{% url 'logout' %}">
+  {% csrf_token %}
+  <button type="submit" class="nav-link" style="background:none;border:none;width:100%;text-align:left;">
+    🚪 Sign out
+  </button>
+</form>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="page-top">
+    <div class="page-header">
+      <h1>Categories</h1>
+      <p>Organise your transactions with custom categories.</p>
+    </div>
+    <a href="{% url 'category_add' %}" class="btn btn-primary">+ Add Category</a>
+  </div>
+
+  {% if messages %}
+  <div class="messages">
+    {% for msg in messages %}
+    <div class="message">{{ msg }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if categories %}
+  <div class="cat-table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>Color</th>
+          <th>Total Spent</th>
+          <th style="text-align:right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cat in categories %}
+        <tr>
+          <td>
+            <div class="cat-name-cell">
+              <div class="cat-icon-box">{{ cat.icon }}</div>
+              <span class="cat-label">{{ cat.name }}</span>
+            </div>
+          </td>
+          <td>
+            <span class="cat-swatch" style="background: {{ cat.color }};"></span>
+            <span style="color:var(--muted); font-size:12px; font-family:'DM Mono',monospace;">{{ cat.color }}</span>
+          </td>
+          <td>
+            <span class="total-amount {% if cat.total_expenses %}has-value{% endif %}">
+              {% if cat.total_expenses %}₹{{ cat.total_expenses|floatformat:0 }}{% else %}—{% endif %}
+            </span>
+          </td>
+          <td>
+            <div class="actions">
+              <a href="{% url 'category_edit' cat.pk %}" class="btn btn-ghost">Edit</a>
+              <a href="{% url 'category_delete' cat.pk %}" class="btn btn-danger">Delete</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% else %}
+  <div class="empty-state">
+    <span class="emoji">🏷️</span>
+    <h3>No categories yet</h3>
+    <p>Create categories to organise your income and expenses.</p>
+    <a href="{% url 'category_add' %}" class="btn btn-primary">Add a Category</a>
+  </div>
+  {% endif %}
+</main>
+
+</body>
+</html>

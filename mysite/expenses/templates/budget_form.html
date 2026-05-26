@@ -1,0 +1,318 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ title }} — BudgetBee</title>
+
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+
+
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  display:flex;
+  min-height:100vh;
+}
+
+
+/* MAIN */
+.main{
+  margin-left:220px;
+  flex:1;
+  padding:40px;
+}
+
+/* CARD */
+.card{
+  max-width:520px;
+  margin:auto;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:28px;
+}
+
+/* HEADER */
+.header h1{
+  font-size:22px;
+  margin-bottom:6px;
+}
+.header p{
+  font-size:13px;
+  color:var(--muted);
+  margin-bottom:24px;
+}
+
+/* FORM */
+.form-group{
+  margin-bottom:18px;
+}
+
+
+:root {
+  --bg: #0d0f14;
+  --surface: #13161e;
+  --border: #252936;
+  --accent: #c9a96e;
+  --accent-soft: rgba(201, 169, 110, 0.10);
+  --text: #eae8e1;
+  --muted: #7a7d8c;
+  --sidebar-w: 220px;
+}
+
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 28px 0;
+  position: fixed;
+  left: 0; top: 0; bottom: 0;
+  z-index: 100;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 20px 28px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+
+.brand-icon {
+  width: 34px; height: 34px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.brand-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 15px;
+  color: var(--text);
+}
+
+.brand-name span {
+  color: var(--accent);
+}
+
+.nav-section {
+  padding: 0 12px;
+  margin-bottom: 6px;
+}
+
+.nav-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  padding: 0 8px;
+  margin-bottom: 6px;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+  margin-bottom: 2px;
+}
+
+.nav-link:hover {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+.nav-link.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.nav-link .icon {
+  font-size: 15px;
+  width: 20px;
+  text-align: center;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 20px 12px 0;
+  border-top: 1px solid var(--border);
+}
+
+label{
+  display:block;
+  font-size:12px;
+  margin-bottom:6px;
+  color:var(--muted);
+}
+
+input, select{
+  width:100%;
+  padding:10px;
+  border-radius:8px;
+  border:1px solid var(--border);
+  background:var(--input);
+  color:var(--text);
+  font-size:14px;
+}
+
+input:focus, select:focus{
+  border-color:var(--accent);
+  outline:none;
+}
+
+/* BUTTON */
+.btn{
+  width:100%;
+  padding:11px;
+  border:none;
+  border-radius:8px;
+  background:var(--accent);
+  color:#111;
+  font-weight:600;
+  cursor:pointer;
+  margin-top:10px;
+}
+
+.btn:hover{opacity:.9}
+
+/* ERROR */
+.error{
+  color:var(--danger);
+  font-size:12px;
+  margin-top:4px;
+}
+</style>
+</head>
+
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">💰</div>
+    <div class="brand-name">Budget<span>Bee</span></div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Main</div>
+    <a href="{% url 'dashboard' %}" class="nav-link">
+      <span class="icon">📊</span> Dashboard
+    </a>
+    <a href="{% url 'expense_list' %}" class="nav-link">
+      <span class="icon">💸</span> Transactions
+    </a>
+    <a href="{% url 'expense_add' %}" class="nav-link">
+      <span class="icon">➕</span> Add Transaction
+    </a>
+  </div>
+
+  <div class="nav-section" style="margin-top: 10px;">
+    <div class="nav-label">Manage</div>
+    <a href="{% url 'budget_list' %}" class="nav-link active">
+      <span class="icon">🎯</span> Budgets
+    </a>
+    <a href="{% url 'category_list' %}" class="nav-link">
+      <span class="icon">🏷️</span> Categories
+    </a>
+    <a href="{% url 'reports' %}" class="nav-link">
+      <span class="icon">📈</span> Reports
+    </a>
+  </div>
+
+  <div class="sidebar-footer">
+    <form method="POST" action="{% url 'logout' %}">
+      {% csrf_token %}
+      <button type="submit" class="nav-link" style="background:none; border:none; width:100%; cursor:pointer;">
+        🚪 Sign out
+      </button>
+    </form>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+
+  <div class="card">
+
+    <div class="header">
+      <h1>{{ title }}</h1>
+      <p>Set your monthly spending limit</p>
+    </div>
+
+    <form method="POST">
+      {% csrf_token %}
+
+      <!-- CATEGORY -->
+      <div class="form-group">
+        <label>Category</label>
+        {{ form.category }}
+        {% if form.category.errors %}
+          <div class="error">{{ form.category.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      <!-- AMOUNT -->
+      <div class="form-group">
+        <label>Budget Amount (₹)</label>
+        {{ form.amount }}
+        {% if form.amount.errors %}
+          <div class="error">{{ form.amount.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      <!-- MONTH -->
+      <div class="form-group">
+        <label>Month</label>
+        {{ form.month }}
+      </div>
+
+      <!-- YEAR -->
+      <div class="form-group">
+        <label>Year</label>
+        {{ form.year }}
+      </div>
+
+      <button type="submit" class="btn">
+        💾 Save Budget
+      </button>
+
+    </form>
+
+  </div>
+
+</div>
+
+<!-- Move this script to just before </body> -->
+<script>
+  function setType(type) {
+    const field = document.getElementById('type-field');
+    if (!field) return;
+    field.value = type;
+    document.querySelectorAll('.type-btn').forEach(b => b.className = 'type-btn');
+    const active = document.querySelector(`.type-btn[data-type="${type}"]`);
+    if (active) active.classList.add(type === 'expense' ? 'active-expense' : 'active-income');
+  }
+  const field = document.getElementById('type-field');
+  setType(field ? field.value || 'expense' : 'expense');
+</script>
+
+</body>
+</html>

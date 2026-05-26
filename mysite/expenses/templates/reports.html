@@ -1,0 +1,462 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reports — BudgetBee</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f1117;
+    --sidebar: #151820;
+    --card: #1a1e2a;
+    --card2: #1f2333;
+    --border: #252a3a;
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --accent: #e8b84b;
+    --accent-dim: rgba(232,184,75,0.12);
+    --green: #34d399;
+    --red: #f87171;
+    --input-bg: #12151f;
+    --radius: 12px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  .sidebar {
+    width: 220px;
+    min-height: 100vh;
+    background: var(--sidebar);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 0;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 20px 28px;
+    font-weight: 600;
+    font-size: 16px;
+  }
+
+  .logo-icon {
+    width: 34px; height: 34px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px;
+  }
+
+  .sidebar-section { padding: 0 12px; margin-bottom: 24px; }
+  .sidebar-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0 8px 10px;
+  }
+
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13.5px;
+    font-weight: 500;
+    transition: all 0.15s;
+  }
+
+  .nav-link:hover { background: var(--card); color: var(--text); }
+  .nav-link.active { background: var(--accent-dim); color: var(--accent); }
+  .nav-link .icon { font-size: 16px; width: 20px; text-align: center; }
+
+  .sidebar-footer { margin-top: auto; padding: 0 12px; }
+
+  .main { margin-left: 220px; flex: 1; padding: 40px 48px; }
+
+  .page-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .page-header h1 { font-size: 26px; font-weight: 600; letter-spacing: -0.5px; }
+  .page-header p { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+  /* Year Selector */
+  .year-form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .year-form select {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13.5px;
+    padding: 8px 14px;
+    outline: none;
+    cursor: pointer;
+  }
+
+  .year-form select:focus { border-color: var(--accent); }
+
+  .btn {
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    transition: opacity 0.15s;
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--accent);
+    color: #111;
+  }
+
+  .btn:hover { opacity: 0.88; }
+
+  /* Summary Cards */
+  .summary-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+  }
+
+  .stat-label { font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; font-weight: 500; margin-bottom: 8px; }
+  .stat-value { font-size: 24px; font-weight: 600; font-family: 'DM Mono', monospace; letter-spacing: -0.5px; }
+  .stat-value.income { color: var(--green); }
+  .stat-value.expense { color: var(--red); }
+  .stat-value.net-pos { color: var(--green); }
+  .stat-value.net-neg { color: var(--red); }
+
+  /* Charts Row */
+  .charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+
+  .chart-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+  }
+
+  .chart-card.full { grid-column: 1 / -1; }
+
+  .chart-title {
+    font-size: 13.5px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: var(--text);
+    letter-spacing: -0.2px;
+  }
+
+  .chart-wrap { position: relative; }
+
+  /* Monthly Table */
+  .table-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .table-header {
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13.5px;
+    font-weight: 600;
+  }
+
+  table { width: 100%; border-collapse: collapse; }
+
+  thead th {
+    padding: 11px 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+  }
+
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.12s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--card2); }
+
+  td {
+    padding: 12px 20px;
+    font-size: 13.5px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  td.label { font-family: 'DM Sans', sans-serif; font-weight: 500; color: var(--text); }
+  td.income { color: var(--green); }
+  td.expense { color: var(--red); }
+  td.positive { color: var(--green); }
+  td.negative { color: var(--red); }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">💰</div>
+    <span>Budget<span>Bee</strong></span>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label">Main</div>
+    <a href="{% url 'dashboard' %}" class="nav-link"><span class="icon">📊</span> Dashboard</a>
+    <a href="{% url 'expense_list' %}" class="nav-link"><span class="icon">💸</span> Transactions</a>
+    <a href="{% url 'expense_add' %}" class="nav-link"><span class="icon">➕</span> Add Transaction</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label">Manage</div>
+    <a href="{% url 'budget_list' %}" class="nav-link"><span class="icon">🎯</span> Budgets</a>
+    <a href="{% url 'category_list' %}" class="nav-link"><span class="icon">🏷️</span> Categories</a>
+    <a href="{% url 'reports' %}" class="nav-link active"><span class="icon">📈</span> Reports</a>
+  </div>
+
+  <div class="sidebar-footer">
+    <a href="{% url 'logout' %}" class="nav-link"><span class="icon">🚪</span> Sign out</a>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="page-top">
+    <div class="page-header">
+      <h1>Reports</h1>
+      <p>Annual breakdown of your income and expenses.</p>
+    </div>
+    <form method="get" class="year-form">
+      <select name="year" onchange="this.form.submit()">
+        {% for y in years %}
+        <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+      </select>
+    </form>
+  </div>
+
+  <!-- Summary -->
+  <div class="summary-row">
+    <div class="stat-card">
+      <div class="stat-label">Total Income</div>
+      <div class="stat-value income">₹{{ yearly_income|floatformat:0 }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total Expenses</div>
+      <div class="stat-value expense">₹{{ yearly_expense|floatformat:0 }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Net Savings</div>
+      <div class="stat-value {% if yearly_net >= 0 %}net-pos{% else %}net-neg{% endif %}">
+        {% if yearly_net >= 0 %}+{% endif %}₹{{ yearly_net|floatformat:0 }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-row">
+    <div class="chart-card full">
+      <div class="chart-title">Monthly Income vs Expenses — {{ year }}</div>
+      <div class="chart-wrap">
+        <canvas id="barChart" height="90"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Spending by Category</div>
+      <div class="chart-wrap" style="max-height:260px; display:flex; justify-content:center;">
+        <canvas id="doughnutChart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Monthly Net Savings</div>
+      <div class="chart-wrap">
+        <canvas id="lineChart" height="160"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Monthly Table -->
+  <div class="table-card">
+    <div class="table-header">Month-by-Month Breakdown</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Month</th>
+          <th>Income</th>
+          <th>Expenses</th>
+          <th>Net</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in monthly_data %}
+        {% with row_data=row %}
+        <tr>
+          <td class="label">{{ row_data.month }}</td>
+          <td class="income">₹{{ row_data.income|floatformat:0 }}</td>
+          <td class="expense">₹{{ row_data.expenses|floatformat:0 }}</td>
+          <td class="{% if row_data.net >= 0 %}positive{% else %}negative{% endif %}">
+            {% if row_data.net >= 0 %}+{% endif %}₹{{ row_data.net|floatformat:0 }}
+          </td>
+        </tr>
+        {% endwith %}
+        {% empty %}
+        <tr><td colspan="4" style="text-align:center; color:var(--muted); padding:32px;">No data for {{ year }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<script>
+  const monthlyData = {{ monthly_data_json|safe }};
+  const catData = {{ cat_data|safe }};
+
+  const labels = monthlyData.map(d => d.month);
+  const incomes = monthlyData.map(d => d.income);
+  const expenses = monthlyData.map(d => d.expenses);
+  const nets = monthlyData.map(d => d.net);
+
+  Chart.defaults.color = '#6b7280';
+  Chart.defaults.font.family = "'DM Sans', sans-serif";
+
+  // Bar Chart
+  new Chart(document.getElementById('barChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Income',
+          data: incomes,
+          backgroundColor: 'rgba(52,211,153,0.7)',
+          borderRadius: 5,
+        },
+        {
+          label: 'Expenses',
+          data: expenses,
+          backgroundColor: 'rgba(248,113,113,0.7)',
+          borderRadius: 5,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'top' } },
+      scales: {
+        x: { grid: { color: '#252a3a' }, ticks: { font: { size: 11 } } },
+        y: {
+          grid: { color: '#252a3a' },
+          ticks: {
+            font: { size: 11 },
+            callback: v => '₹' + v.toLocaleString()
+          }
+        }
+      }
+    }
+  });
+
+  // Doughnut
+  if (catData.length > 0) {
+    new Chart(document.getElementById('doughnutChart'), {
+      type: 'doughnut',
+      data: {
+        labels: catData.map(c => c.name),
+        datasets: [{
+          data: catData.map(c => c.total),
+          backgroundColor: catData.map(c => c.color),
+          borderWidth: 2,
+          borderColor: '#1a1e2a',
+        }]
+      },
+      options: {
+        responsive: true,
+        cutout: '65%',
+        plugins: {
+          legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 12 } }
+        }
+      }
+    });
+  } else {
+    document.getElementById('doughnutChart').parentElement.innerHTML =
+      '<p style="color:var(--muted);font-size:13px;text-align:center;padding:40px 0;">No category data</p>';
+  }
+
+  // Line Chart (Net)
+  new Chart(document.getElementById('lineChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Net',
+        data: nets,
+        borderColor: '#e8b84b',
+        backgroundColor: 'rgba(232,184,75,0.08)',
+        tension: 0.3,
+        fill: true,
+        pointRadius: 4,
+        pointBackgroundColor: '#e8b84b',
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: '#252a3a' }, ticks: { font: { size: 11 } } },
+        y: {
+          grid: { color: '#252a3a' },
+          ticks: { font: { size: 11 }, callback: v => '₹' + v.toLocaleString() }
+        }
+      }
+    }
+  });
+</script>
+</body>
+</html>

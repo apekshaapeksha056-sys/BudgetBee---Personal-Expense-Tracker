@@ -1,0 +1,484 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard — BudgetBee</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0f14;
+      --surface: #13161e;
+      --card: #181c26;
+      --border: #252936;
+      --accent: #c9a96e;
+      --accent-soft: rgba(201,169,110,0.10);
+      --accent-glow: rgba(201,169,110,0.20);
+      --text: #eae8e1;
+      --muted: #7a7d8c;
+      --danger: #e05c6a;
+      --success: #4ecb8d;
+      --warning: #f0a04b;
+      --sidebar-w: 220px;
+    }
+
+    html, body { min-height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-weight: 300; }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse 50% 40% at 20% 10%, rgba(201,169,110,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 50% at 85% 90%, rgba(78,107,180,0.05) 0%, transparent 55%);
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ── Layout ── */
+    .layout { display: flex; min-height: 100vh; position: relative; z-index: 1; }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 28px 0;
+      position: fixed; left: 0; top: 0; bottom: 0;
+      z-index: 100;
+    }
+
+    .sidebar-brand {
+      display: flex; align-items: center; gap: 10px;
+      padding: 0 20px 28px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+    .brand-icon { width: 34px; height: 34px; background: var(--accent-soft); border: 1px solid var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+    .brand-name { font-family: 'Playfair Display', serif; font-size: 15px; }
+    .brand-name span { color: var(--accent); }
+
+    .nav-section { padding: 0 12px; margin-bottom: 6px; }
+    .nav-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); padding: 0 8px; margin-bottom: 6px; }
+
+    .nav-link {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 10px; border-radius: 8px;
+      color: var(--muted); font-size: 13px; text-decoration: none;
+      transition: background 0.15s, color 0.15s;
+      margin-bottom: 2px;
+    }
+    .nav-link:hover { background: var(--accent-soft); color: var(--text); }
+    .nav-link.active { background: var(--accent-soft); color: var(--accent); }
+    .nav-link .icon { font-size: 15px; width: 20px; text-align: center; }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 20px 12px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── Main ── */
+    .main { margin-left: var(--sidebar-w); flex: 1; padding: 32px 36px; min-width: 0; }
+
+    /* ── Top bar ── */
+    .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; }
+    .topbar-left h1 { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 700; margin-bottom: 2px; }
+    .topbar-left p { font-size: 12px; color: var(--muted); }
+
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 16px; border-radius: 8px; font-size: 13px;
+      font-family: 'DM Sans', sans-serif; font-weight: 500;
+      cursor: pointer; text-decoration: none; border: none;
+      transition: opacity 0.15s, transform 0.12s;
+    }
+    .btn:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn-primary { background: var(--accent); color: #0d0f14; }
+    .btn-ghost { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+
+    /* ── Messages ── */
+    .msgs { margin-bottom: 20px; }
+    .msg { padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 8px; }
+    .msg.success { background: rgba(78,203,141,0.1); border: 1px solid rgba(78,203,141,0.3); color: var(--success); }
+    .msg.error   { background: rgba(224,92,106,0.1); border: 1px solid rgba(224,92,106,0.3); color: var(--danger); }
+
+    /* ── Stat cards ── */
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px 22px;
+      position: relative;
+      overflow: hidden;
+      animation: fadeUp 0.4s ease both;
+    }
+    .stat-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    }
+    .stat-card.income::before  { background: var(--success); }
+    .stat-card.expense::before { background: var(--danger); }
+    .stat-card.balance::before { background: var(--accent); }
+
+    .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 10px; }
+    .stat-value { font-family: 'Playfair Display', serif; font-size: 1.8rem; font-weight: 700; margin-bottom: 4px; }
+    .stat-value.income-val  { color: var(--success); }
+    .stat-value.expense-val { color: var(--danger); }
+    .stat-value.balance-val { color: {% if balance >= 0 %}var(--success){% else %}var(--danger){% endif %}; }
+    .stat-sub { font-size: 11px; color: var(--muted); }
+    .stat-icon { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); font-size: 28px; opacity: 0.12; }
+
+    /* ── Grid sections ── */
+    .grid-2 { display: grid; grid-template-columns: 1.6fr 1fr; gap: 16px; margin-bottom: 24px; }
+    .grid-2b { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px;
+      animation: fadeUp 0.4s 0.1s ease both;
+    }
+
+    .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+    .panel-title { font-size: 13px; font-weight: 500; color: var(--text); }
+    .panel-action { font-size: 11px; color: var(--accent); text-decoration: none; }
+    .panel-action:hover { text-decoration: underline; }
+
+    /* chart canvas */
+    .chart-wrap { position: relative; height: 200px; }
+
+    /* ── Recent transactions ── */
+    .tx-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .tx-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 12px; border-radius: 10px;
+      background: var(--surface);
+      transition: background 0.15s;
+    }
+    .tx-item:hover { background: var(--border); }
+
+    .tx-cat {
+      width: 36px; height: 36px; border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; flex-shrink: 0;
+    }
+
+    .tx-body { flex: 1; min-width: 0; }
+    .tx-title { font-size: 13px; font-weight: 400; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tx-date  { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+    .tx-amt { font-size: 13px; font-weight: 500; white-space: nowrap; }
+    .tx-amt.neg { color: var(--danger); }
+    .tx-amt.pos { color: var(--success); }
+
+    /* ── Budget bars ── */
+    .budget-list { display: flex; flex-direction: column; gap: 14px; }
+    .budget-item {}
+    .budget-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+    .budget-name { font-size: 12px; color: var(--text); }
+    .budget-nums { font-size: 11px; color: var(--muted); }
+    .budget-track { height: 4px; background: var(--border); border-radius: 99px; overflow: hidden; }
+    .budget-fill { height: 100%; border-radius: 99px; transition: width 0.6s ease; }
+    .budget-fill.ok   { background: var(--success); }
+    .budget-fill.warn { background: var(--warning); }
+    .budget-fill.over { background: var(--danger); }
+
+    /* ── Category donut ── */
+    .donut-wrap { display: flex; align-items: center; gap: 18px; }
+    .donut-canvas { position: relative; width: 140px; height: 140px; flex-shrink: 0; }
+    .cat-legend { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 0; }
+    .cat-row { display: flex; align-items: center; gap: 8px; }
+    .cat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .cat-lbl { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+    .cat-val { font-size: 11px; color: var(--text); white-space: nowrap; }
+
+    /* ── Empty states ── */
+    .empty { text-align: center; padding: 28px 16px; color: var(--muted); font-size: 13px; }
+    .empty .empty-icon { font-size: 28px; margin-bottom: 8px; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 1100px) {
+      .grid-2 { grid-template-columns: 1fr; }
+      .grid-2b { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 780px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; padding: 20px 16px; }
+      .stats { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">💰</div>
+      <div class="brand-name">Budget<span>Bee</span></div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Main</div>
+      <a href="{% url 'dashboard' %}" class="nav-link active">
+        <span class="icon">📊</span> Dashboard
+      </a>
+      <a href="{% url 'expense_list' %}" class="nav-link">
+        <span class="icon">💸</span> Transactions
+      </a>
+      <a href="{% url 'expense_add' %}" class="nav-link">
+        <span class="icon">➕</span> Add Transaction
+      </a>
+    </div>
+
+    <div class="nav-section" style="margin-top:10px;">
+      <div class="nav-label">Manage</div>
+      <a href="{% url 'budget_list' %}" class="nav-link">
+        <span class="icon">🎯</span> Budgets
+      </a>
+      <a href="{% url 'category_list' %}" class="nav-link">
+        <span class="icon">🏷️</span> Categories
+      </a>
+      <a href="{% url 'reports' %}" class="nav-link">
+        <span class="icon">📈</span> Reports
+      </a>
+    </div>
+
+    <div class="sidebar-footer">
+      <form method="POST" action="{% url 'logout' %}">
+  {% csrf_token %}
+  <button type="submit" class="nav-link" style="background:none;border:none;width:100%;text-align:left;">
+    🚪 Sign out
+  </button>
+</form>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- Top bar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <h1>Good {% now "G" as hour %}{% if hour < 12 %}Morning{% elif hour < 18 %}Afternoon{% else %}Evening{% endif %}, {{ request.user.first_name|default:request.user.username }} 👋</h1>
+        <p>{{ today|date:"l, F j, Y" }} &nbsp;·&nbsp; Monthly overview</p>
+      </div>
+      <div class="topbar-right">
+        <a href="{% url 'expense_add' %}" class="btn btn-primary">+ Add Transaction</a>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}
+      <div class="msgs">
+        {% for message in messages %}
+          <div class="msg {{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <!-- Stat cards -->
+    <div class="stats">
+      <div class="stat-card income">
+        <div class="stat-label">Income this month</div>
+        <div class="stat-value income-val">₹{{ monthly_income|floatformat:0 }}</div>
+        <div class="stat-sub">Total received</div>
+        <div class="stat-icon">💰</div>
+      </div>
+      <div class="stat-card expense">
+        <div class="stat-label">Spent this month</div>
+        <div class="stat-value expense-val">₹{{ monthly_expenses|floatformat:0 }}</div>
+        <div class="stat-sub">Total expenses</div>
+        <div class="stat-icon">💸</div>
+      </div>
+      <div class="stat-card balance">
+        <div class="stat-label">Net balance</div>
+        <div class="stat-value balance-val">{% if balance >= 0 %}+{% endif %}₹{{ balance|floatformat:0 }}</div>
+        <div class="stat-sub">Income − Expenses</div>
+        <div class="stat-icon">⚖️</div>
+      </div>
+    </div>
+
+    <!-- Chart + Donut -->
+    <div class="grid-2">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">6-Month Overview</span>
+          <a href="{% url 'reports' %}" class="panel-action">Full report →</a>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="barChart"></canvas>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">By Category</span>
+          <a href="{% url 'expense_list' %}" class="panel-action">View all →</a>
+        </div>
+        {% if cat_totals %}
+          <div class="donut-wrap">
+            <div class="donut-canvas">
+              <canvas id="donutChart"></canvas>
+            </div>
+            <div class="cat-legend" id="catLegend"></div>
+          </div>
+        {% else %}
+          <div class="empty"><div class="empty-icon">📊</div>No category data yet</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Recent + Budgets -->
+    <div class="grid-2b">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Recent Transactions</span>
+          <a href="{% url 'expense_list' %}" class="panel-action">See all →</a>
+        </div>
+        {% if recent %}
+          <div class="tx-list">
+            {% for tx in recent %}
+              <div class="tx-item">
+                <div class="tx-cat" style="background:{{ tx.category.color|default:'#2a2d38' }}22;">
+                  {{ tx.category.icon|default:"📦" }}
+                </div>
+                <div class="tx-body">
+                  <div class="tx-title">{{ tx.title }}</div>
+                  <div class="tx-date">{{ tx.date|date:"M j" }} · {{ tx.category.name|default:"Uncategorised" }}</div>
+                </div>
+                <div class="tx-amt {% if tx.type == 'income' %}pos{% else %}neg{% endif %}">
+                  {% if tx.type == 'income' %}+{% else %}−{% endif %}₹{{ tx.amount|floatformat:0 }}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty"><div class="empty-icon">📭</div>No transactions yet.<br><a href="{% url 'expense_add' %}" style="color:var(--accent);">Add your first →</a></div>
+        {% endif %}
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Budget Tracker</span>
+          <a href="{% url 'budget_list' %}" class="panel-action">Manage →</a>
+        </div>
+        {% if budget_data %}
+          <div class="budget-list">
+            {% for b in budget_data %}
+              <div class="budget-item">
+                <div class="budget-top">
+                  <span class="budget-name">{{ b.budget.category.icon|default:"🎯" }} {{ b.budget.category.name|default:"Overall" }}</span>
+                  <span class="budget-nums">₹{{ b.spent|floatformat:0 }} / ₹{{ b.budget.amount|floatformat:0 }}</span>
+                </div>
+                <div class="budget-track">
+                  <div class="budget-fill {% if b.pct >= 90 %}over{% elif b.pct >= 70 %}warn{% else %}ok{% endif %}" style="width:{{ b.pct }}%"></div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty"><div class="empty-icon">🎯</div>No budgets set.<br><a href="{% url 'budget_add' %}" style="color:var(--accent);">Set a budget →</a></div>
+        {% endif %}
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  const monthsData  = {{ months_data|safe }};
+  const catLabels   = {{ cat_labels|safe }};
+  const catTotals   = {{ cat_totals|safe }};
+  const catColors   = {{ cat_colors|safe }};
+
+  Chart.defaults.color = '#7a7d8c';
+  Chart.defaults.font.family = "'DM Sans', sans-serif";
+  Chart.defaults.font.size = 11;
+
+  // ── Bar chart ──
+  new Chart(document.getElementById('barChart'), {
+    type: 'bar',
+    data: {
+      labels: monthsData.map(d => d.month),
+      datasets: [
+        {
+          label: 'Income',
+          data: monthsData.map(d => d.income),
+          backgroundColor: 'rgba(78,203,141,0.55)',
+          borderColor: 'rgba(78,203,141,0.9)',
+          borderWidth: 1.5,
+          borderRadius: 5,
+        },
+        {
+          label: 'Expenses',
+          data: monthsData.map(d => d.expenses),
+          backgroundColor: 'rgba(224,92,106,0.5)',
+          borderColor: 'rgba(224,92,106,0.9)',
+          borderWidth: 1.5,
+          borderRadius: 5,
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { boxWidth: 10, padding: 14 } },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ₹${ctx.parsed.y.toLocaleString('en-IN')}`
+          }
+        }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { maxRotation: 0 } },
+        y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { callback: v => '₹' + (v >= 1000 ? (v/1000).toFixed(0)+'k' : v) } }
+      }
+    }
+  });
+
+  // ── Donut chart ──
+  if (catTotals.length) {
+    new Chart(document.getElementById('donutChart'), {
+      type: 'doughnut',
+      data: {
+        labels: catLabels,
+        datasets: [{ data: catTotals, backgroundColor: catColors, borderColor: '#181c26', borderWidth: 3, hoverOffset: 6 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        cutout: '68%',
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ₹${ctx.parsed.toLocaleString('en-IN')}` } } }
+      }
+    });
+
+    // Legend
+    const leg = document.getElementById('catLegend');
+    catLabels.forEach((lbl, i) => {
+      if (i >= 5) return;
+      leg.innerHTML += `<div class="cat-row">
+        <div class="cat-dot" style="background:${catColors[i]}"></div>
+        <div class="cat-lbl">${lbl}</div>
+        <div class="cat-val">₹${catTotals[i].toLocaleString('en-IN')}</div>
+      </div>`;
+    });
+  }
+</script>
+</body>
+</html>

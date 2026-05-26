@@ -1,0 +1,782 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Create Account — Expense Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0f14;
+      --surface: #13161e;
+      --card: #181c26;
+      --border: #252936;
+      --accent: #c9a96e;
+      --accent-soft: rgba(201,169,110,0.12);
+      --accent-glow: rgba(201,169,110,0.25);
+      --text: #eae8e1;
+      --muted: #7a7d8c;
+      --danger: #e05c6a;
+      --success: #4ecb8d;
+      --warning: #f0a04b;
+    }
+
+    html, body {
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse 55% 45% at 25% 15%, rgba(201,169,110,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 45% 55% at 80% 85%, rgba(78,107,180,0.06) 0%, transparent 55%);
+      pointer-events: none; z-index: 0;
+    }
+
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.022) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.022) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ── Layout ── */
+    .page {
+      position: relative; z-index: 1;
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1.1fr;
+    }
+
+    /* ── Left panel ── */
+    .panel-left {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 60px 64px;
+      border-right: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel-left::after {
+      content: '';
+      position: absolute;
+      right: -1px; top: 20%; bottom: 20%;
+      width: 1px;
+      background: linear-gradient(to bottom, transparent, var(--accent), transparent);
+    }
+
+    .brand {
+      display: flex; align-items: center; gap: 14px;
+      margin-bottom: 56px;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .brand-icon {
+      width: 44px; height: 44px;
+      background: var(--accent-soft);
+      border: 1px solid var(--accent);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+    }
+
+    .brand-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      letter-spacing: 0.02em;
+    }
+    .brand-name span { color: var(--accent); }
+
+    .hero-text { animation: fadeUp 0.6s 0.1s ease both; }
+
+    .hero-text h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 3vw, 2.8rem);
+      line-height: 1.18;
+      font-weight: 700;
+      margin-bottom: 18px;
+    }
+
+    .hero-text h1 em { font-style: italic; color: var(--accent); }
+
+    .hero-text p {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.75;
+      max-width: 340px;
+    }
+
+    /* steps */
+    .steps {
+      margin-top: 52px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      animation: fadeUp 0.6s 0.2s ease both;
+    }
+
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .step-num {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 500;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .step-body h4 {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 3px;
+    }
+
+    .step-body p {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* deco ticker */
+    .deco-ticker {
+      position: absolute;
+      bottom: 52px; right: -24px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 20px;
+      min-width: 190px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      animation: floatCard 5s ease-in-out infinite, fadeUp 0.6s 0.4s ease both;
+    }
+
+    .ticker-label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .ticker-items { display: flex; flex-direction: column; gap: 10px; }
+
+    .ticker-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .ticker-icon { font-size: 14px; }
+
+    .ticker-name {
+      font-size: 12px;
+      color: var(--text);
+      flex: 1;
+    }
+
+    .ticker-amt {
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .ticker-amt.neg { color: var(--danger); }
+    .ticker-amt.pos { color: var(--success); }
+
+    @keyframes floatCard {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    /* ── Right panel ── */
+    .panel-right {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 52px 64px;
+      overflow-y: auto;
+    }
+
+    .form-box {
+      width: 100%;
+      max-width: 420px;
+      padding-top: 12px;
+      animation: fadeUp 0.6s 0.15s ease both;
+    }
+
+    .form-header {
+      margin-bottom: 36px;
+    }
+
+    .form-header h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.9rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .form-header p {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    /* step indicator */
+    .step-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 32px;
+    }
+
+    .si-dot {
+      height: 3px;
+      border-radius: 99px;
+      background: var(--border);
+      transition: background 0.3s, width 0.3s;
+    }
+
+    .si-dot.active { background: var(--accent); width: 28px !important; }
+    .si-dot.done   { background: var(--success); }
+
+    /* messages */
+    .messages { margin-bottom: 20px; }
+
+    .msg {
+      padding: 11px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .msg.error   { background: rgba(224,92,106,0.1);  border: 1px solid rgba(224,92,106,0.3); color: var(--danger); }
+    .msg.success { background: rgba(78,203,141,0.1);  border: 1px solid rgba(78,203,141,0.3); color: var(--success); }
+
+    /* row */
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .field { margin-bottom: 18px; }
+
+    label.field-label {
+      display: block;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 7px;
+    }
+
+    .input-wrap { position: relative; }
+
+    .input-wrap .icon {
+      position: absolute;
+      left: 13px; top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 14px;
+      pointer-events: none;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 13px 12px 38px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13.5px;
+      font-weight: 300;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      background: var(--card);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    input.is-error { border-color: var(--danger) !important; }
+
+    input::placeholder { color: #454857; }
+
+    .toggle-pw {
+      position: absolute;
+      right: 12px; top: 50%;
+      transform: translateY(-50%);
+      background: none; border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 13px;
+      padding: 0;
+      transition: color 0.2s;
+    }
+    .toggle-pw:hover { color: var(--accent); }
+
+    /* field error */
+    .field-error {
+      color: var(--danger);
+      font-size: 11px;
+      margin-top: 5px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* password strength */
+    .pw-strength {
+      margin-top: 8px;
+    }
+
+    .pw-bars {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 4px;
+    }
+
+    .pw-bar {
+      flex: 1;
+      height: 3px;
+      border-radius: 99px;
+      background: var(--border);
+      transition: background 0.3s;
+    }
+
+    .pw-bar.filled-weak   { background: var(--danger); }
+    .pw-bar.filled-fair   { background: var(--warning); }
+    .pw-bar.filled-strong { background: var(--success); }
+
+    .pw-label {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* terms */
+    .terms-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 24px;
+      font-size: 12.5px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .terms-row input[type="checkbox"] {
+      width: 15px; height: 15px;
+      accent-color: var(--accent);
+      cursor: pointer;
+      margin-top: 2px;
+      flex-shrink: 0;
+      padding: 0;
+      border: none;
+    }
+
+    .terms-row a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    /* submit */
+    .btn-submit {
+      width: 100%;
+      background: var(--accent);
+      color: #0d0f14;
+      border: none;
+      border-radius: 10px;
+      padding: 13px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+
+    .btn-submit:hover  { opacity: 0.9; transform: translateY(-1px); }
+    .btn-submit:active { transform: translateY(0); }
+
+    .btn-submit::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.18) 50%, transparent 70%);
+      transform: translateX(-100%);
+      transition: transform 0.5s;
+    }
+    .btn-submit:hover::after { transform: translateX(100%); }
+
+    /* divider */
+    .divider {
+      display: flex; align-items: center; gap: 12px;
+      margin: 24px 0;
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .divider::before, .divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    .login-row {
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .login-row a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+      transition: opacity 0.2s;
+    }
+    .login-row a:hover { opacity: 0.7; }
+
+    /* section label */
+    .section-sep {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+      margin-bottom: 18px;
+      margin-top: 6px;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 900px) {
+      .page { grid-template-columns: 1fr; }
+      .panel-left { display: none; }
+      .panel-right { padding: 48px 28px; }
+      .field-row { grid-template-columns: 1fr; gap: 0; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- LEFT PANEL -->
+  <div class="panel-left">
+    <div class="brand">
+      <div class="brand-icon">💰</div>
+      <div class="brand-name">Budget<span>Bee</span></div>
+    </div>
+
+    <div class="hero-text">
+      <h1>Start your journey to<br><em>financial clarity.</em></h1>
+      <p>Join thousands of people who finally understand where their money goes each month.</p>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h4>Create your account</h4>
+          <p>Free forever. No credit card required.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h4>Add your transactions</h4>
+          <p>Log income and expenses with categories.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h4>Set budgets & get insights</h4>
+          <p>See charts and reports to stay on track.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- floating deco -->
+    <div class="deco-ticker">
+      <div class="ticker-label">Recent activity</div>
+      <div class="ticker-items">
+        <div class="ticker-item">
+          <span class="ticker-icon">💰</span>
+          <span class="ticker-name">Salary</span>
+          <span class="ticker-amt pos">+₹45,000</span>
+        </div>
+        <div class="ticker-item">
+          <span class="ticker-icon">🍔</span>
+          <span class="ticker-name">Dining</span>
+          <span class="ticker-amt neg">−₹1,200</span>
+        </div>
+        <div class="ticker-item">
+          <span class="ticker-icon">🚗</span>
+          <span class="ticker-name">Fuel</span>
+          <span class="ticker-amt neg">−₹850</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="panel-right">
+    <div class="form-box">
+
+      <div class="form-header">
+        <h2>Create account</h2>
+        <p>Fill in your details to get started — takes under a minute.</p>
+      </div>
+
+      <!-- Step indicator dots -->
+      <div class="step-indicator" id="stepDots">
+        <div class="si-dot active" style="width:28px"></div>
+        <div class="si-dot" style="width:14px"></div>
+        <div class="si-dot" style="width:14px"></div>
+      </div>
+
+      <!-- Django messages -->
+      {% if messages %}
+        <div class="messages">
+          {% for message in messages %}
+            <div class="msg {{ message.tags }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <form method="POST" action="{% url 'register' %}" id="regForm" novalidate>
+        {% csrf_token %}
+
+        <div class="section-sep">Personal info</div>
+
+        <div class="field-row">
+          <div class="field">
+            <label class="field-label" for="id_first_name">First Name</label>
+            <div class="input-wrap">
+              <span class="icon">✏️</span>
+              <input
+                type="text"
+                id="id_first_name"
+                name="first_name"
+                placeholder="Veeresh"
+                value="{{ form.first_name.value|default:'' }}"
+                class="{% if form.first_name.errors %}is-error{% endif %}"
+                autocomplete="given-name"
+              />
+            </div>
+            {% if form.first_name.errors %}
+              <div class="field-error">⚠ {{ form.first_name.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="id_last_name">Last Name</label>
+            <div class="input-wrap">
+              <span class="icon">✏️</span>
+              <input
+                type="text"
+                id="id_last_name"
+                name="last_name"
+                placeholder="Kumar"
+                value="{{ form.last_name.value|default:'' }}"
+                autocomplete="family-name"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="id_email">Email Address</label>
+          <div class="input-wrap">
+            <span class="icon">📧</span>
+            <input
+              type="email"
+              id="id_email"
+              name="email"
+              placeholder="you@example.com"
+              value="{{ form.email.value|default:'' }}"
+              class="{% if form.email.errors %}is-error{% endif %}"
+              autocomplete="email"
+            />
+          </div>
+          {% if form.email.errors %}
+            <div class="field-error">⚠ {{ form.email.errors.0 }}</div>
+          {% endif %}
+        </div>
+
+        <div class="section-sep" style="margin-top:10px;">Account details</div>
+
+        <div class="field">
+          <label class="field-label" for="id_username">Username</label>
+          <div class="input-wrap">
+            <span class="icon">👤</span>
+            <input
+              type="text"
+              id="id_username"
+              name="username"
+              placeholder="Choose a unique username"
+              value="{{ form.username.value|default:'' }}"
+              class="{% if form.username.errors %}is-error{% endif %}"
+              autocomplete="username"
+            />
+          </div>
+          {% if form.username.errors %}
+            <div class="field-error">⚠ {{ form.username.errors.0 }}</div>
+          {% endif %}
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="id_password1">Password</label>
+          <div class="input-wrap">
+            <span class="icon">🔒</span>
+            <input
+              type="password"
+              id="id_password1"
+              name="password1"
+              placeholder="Create a strong password"
+              class="{% if form.password1.errors %}is-error{% endif %}"
+              autocomplete="new-password"
+              oninput="checkStrength(this.value)"
+            />
+            <button type="button" class="toggle-pw" onclick="togglePw('id_password1', this)" title="Show/hide">👁</button>
+          </div>
+          {% if form.password1.errors %}
+            <div class="field-error">⚠ {{ form.password1.errors.0 }}</div>
+          {% endif %}
+          <div class="pw-strength" id="pwStrength" style="display:none">
+            <div class="pw-bars">
+              <div class="pw-bar" id="bar1"></div>
+              <div class="pw-bar" id="bar2"></div>
+              <div class="pw-bar" id="bar3"></div>
+              <div class="pw-bar" id="bar4"></div>
+            </div>
+            <span class="pw-label" id="pwLabel">Too short</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="id_password2">Confirm Password</label>
+          <div class="input-wrap">
+            <span class="icon">🔒</span>
+            <input
+              type="password"
+              id="id_password2"
+              name="password2"
+              placeholder="Repeat your password"
+              class="{% if form.password2.errors %}is-error{% endif %}"
+              autocomplete="new-password"
+              oninput="checkMatch()"
+            />
+            <button type="button" class="toggle-pw" onclick="togglePw('id_password2', this)" title="Show/hide">👁</button>
+          </div>
+          {% if form.password2.errors %}
+            <div class="field-error">⚠ {{ form.password2.errors.0 }}</div>
+          {% endif %}
+          <div class="field-error" id="matchErr" style="display:none">⚠ Passwords do not match</div>
+        </div>
+
+        <div class="terms-row">
+          <input type="checkbox" id="terms" required/>
+          <label for="terms" style="cursor:pointer;">
+            I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>. Your data stays private and is never sold.
+          </label>
+        </div>
+
+        <button type="submit" class="btn-submit" id="submitBtn">Create My Account</button>
+      </form>
+
+      <div class="divider">already have an account?</div>
+
+      <div class="login-row">
+        <a href="{% url 'login' %}">Sign in instead →</a>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  function togglePw(id, btn) {
+    const input = document.getElementById(id);
+    if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
+    else { input.type = 'password'; btn.textContent = '👁'; }
+  }
+
+  function checkStrength(val) {
+    const bars = ['bar1','bar2','bar3','bar4'];
+    const label = document.getElementById('pwLabel');
+    const wrap = document.getElementById('pwStrength');
+
+    if (!val) { wrap.style.display = 'none'; return; }
+    wrap.style.display = 'block';
+
+    let score = 0;
+    if (val.length >= 8) score++;
+    if (/[A-Z]/.test(val)) score++;
+    if (/[0-9]/.test(val)) score++;
+    if (/[^A-Za-z0-9]/.test(val)) score++;
+
+    const cls = score <= 1 ? 'filled-weak' : score <= 2 ? 'filled-fair' : 'filled-strong';
+    const labels = ['Too weak', 'Weak', 'Fair', 'Strong', 'Very strong'];
+    label.textContent = labels[score] || 'Very strong';
+    label.style.color = score <= 1 ? 'var(--danger)' : score <= 2 ? 'var(--warning)' : 'var(--success)';
+
+    bars.forEach((b, i) => {
+      const el = document.getElementById(b);
+      el.className = 'pw-bar ' + (i < score ? cls : '');
+    });
+  }
+
+  function checkMatch() {
+    const p1 = document.getElementById('id_password1').value;
+    const p2 = document.getElementById('id_password2').value;
+    const err = document.getElementById('matchErr');
+    if (p2 && p1 !== p2) err.style.display = 'flex';
+    else err.style.display = 'none';
+  }
+
+  // Animate step dots on scroll/focus
+  const fields = document.querySelectorAll('input');
+  const dots = document.querySelectorAll('.si-dot');
+  let maxStep = 0;
+
+  fields.forEach((f, i) => {
+    f.addEventListener('focus', () => {
+      const step = i < 3 ? 0 : i < 5 ? 1 : 2;
+      if (step > maxStep) maxStep = step;
+      dots.forEach((d, di) => {
+        d.className = 'si-dot' + (di < maxStep ? ' done' : di === maxStep ? ' active' : '');
+        d.style.width = di === maxStep ? '28px' : '14px';
+      });
+    });
+  });
+</script>
+</body>
+</html>

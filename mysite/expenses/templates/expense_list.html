@@ -1,0 +1,298 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Transactions — ExpenseTrack</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d0f14; --surface: #13161e; --card: #181c26; --border: #252936;
+      --accent: #c9a96e; --accent-soft: rgba(201,169,110,0.10); --accent-glow: rgba(201,169,110,0.20);
+      --text: #eae8e1; --muted: #7a7d8c; --danger: #e05c6a; --success: #4ecb8d; --warning: #f0a04b;
+      --sidebar-w: 220px;
+    }
+    html, body { min-height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-weight: 300; }
+    body::before { content: ''; position: fixed; inset: 0; background: radial-gradient(ellipse 50% 40% at 20% 10%, rgba(201,169,110,0.06) 0%, transparent 60%); pointer-events: none; z-index: 0; }
+    .layout { display: flex; min-height: 100vh; position: relative; z-index: 1; }
+
+    /* Sidebar */
+    .sidebar { width: var(--sidebar-w); background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 28px 0; position: fixed; left: 0; top: 0; bottom: 0; z-index: 100; }
+    .sidebar-brand { display: flex; align-items: center; gap: 10px; padding: 0 20px 28px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+    .brand-icon { width: 34px; height: 34px; background: var(--accent-soft); border: 1px solid var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+    .brand-name { font-family: 'Playfair Display', serif; font-size: 15px; }
+    .brand-name span { color: var(--accent); }
+    .nav-section { padding: 0 12px; margin-bottom: 6px; }
+    .nav-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); padding: 0 8px; margin-bottom: 6px; }
+    .nav-link { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: var(--muted); font-size: 13px; text-decoration: none; transition: background 0.15s, color 0.15s; margin-bottom: 2px; }
+    .nav-link:hover { background: var(--accent-soft); color: var(--text); }
+    .nav-link.active { background: var(--accent-soft); color: var(--accent); }
+    .nav-link .icon { font-size: 15px; width: 20px; text-align: center; }
+    .sidebar-footer { margin-top: auto; padding: 20px 12px 0; border-top: 1px solid var(--border); }
+
+    /* Main */
+    .main { margin-left: var(--sidebar-w); flex: 1; padding: 32px 36px; min-width: 0; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+    .topbar h1 { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 700; }
+    .topbar p { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: 8px; font-size: 13px; font-family: 'DM Sans', sans-serif; font-weight: 500; cursor: pointer; text-decoration: none; border: none; transition: opacity 0.15s, transform 0.12s; }
+    .btn:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn-primary { background: var(--accent); color: #0d0f14; }
+    .btn-ghost { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+    .btn-danger { background: rgba(224,92,106,0.15); border: 1px solid rgba(224,92,106,0.3); color: var(--danger); }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+    /* Messages */
+    .msgs { margin-bottom: 20px; }
+    .msg { padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 8px; }
+    .msg.success { background: rgba(78,203,141,0.1); border: 1px solid rgba(78,203,141,0.3); color: var(--success); }
+    .msg.error { background: rgba(224,92,106,0.1); border: 1px solid rgba(224,92,106,0.3); color: var(--danger); }
+
+    /* Summary pills */
+    .summary { display: flex; gap: 14px; margin-bottom: 20px; flex-wrap: wrap; }
+    .pill { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 18px; display: flex; flex-direction: column; gap: 2px; }
+    .pill-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+    .pill-value { font-size: 1.1rem; font-weight: 600; font-family: 'Playfair Display', serif; }
+    .pill-value.inc { color: var(--success); }
+    .pill-value.exp { color: var(--danger); }
+
+    /* Filter bar */
+    .filter-bar { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; margin-bottom: 20px; }
+    .filter-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+    .filter-group { display: flex; flex-direction: column; gap: 5px; }
+    .filter-group label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+    .filter-group select,
+    .filter-group input[type="text"],
+    .filter-group input[type="date"] {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 12.5px; font-weight: 300;
+      padding: 7px 10px; outline: none; transition: border-color 0.2s;
+    }
+    .filter-group select:focus,
+    .filter-group input:focus { border-color: var(--accent); }
+    .filter-group select option { background: var(--card); }
+    .filter-actions { display: flex; gap: 8px; align-items: flex-end; margin-top: 0; }
+
+    /* Table */
+    .table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th { background: var(--surface); padding: 12px 16px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-weight: 500; border-bottom: 1px solid var(--border); }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background 0.12s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--surface); }
+    tbody td { padding: 12px 16px; font-size: 13px; vertical-align: middle; }
+
+    .cat-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 11px; background: var(--surface); border: 1px solid var(--border); }
+    .type-badge { display: inline-block; padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+    .type-badge.income  { background: rgba(78,203,141,0.12); color: var(--success); }
+    .type-badge.expense { background: rgba(224,92,106,0.12); color: var(--danger); }
+    .amount { font-weight: 500; }
+    .amount.neg { color: var(--danger); }
+    .amount.pos { color: var(--success); }
+    .td-actions { display: flex; gap: 6px; }
+
+    /* Pagination */
+    .pagination { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 20px; }
+    .page-btn { background: var(--card); border: 1px solid var(--border); border-radius: 7px; color: var(--text); font-size: 12px; padding: 6px 12px; text-decoration: none; transition: background 0.15s; }
+    .page-btn:hover { background: var(--accent-soft); border-color: var(--accent); }
+    .page-btn.current { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+    .page-info { font-size: 12px; color: var(--muted); }
+
+    .empty { text-align: center; padding: 52px 16px; color: var(--muted); font-size: 13px; }
+    .empty .empty-icon { font-size: 32px; margin-bottom: 10px; }
+
+    @media (max-width: 780px) { .sidebar { display: none; } .main { margin-left: 0; padding: 20px 16px; } table { font-size: 12px; } .td-actions { flex-direction: column; } }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">💰</div>
+      <div class="brand-name">Budget<span>Bee</span></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Main</div>
+      <a href="{% url 'dashboard' %}" class="nav-link"><span class="icon">📊</span> Dashboard</a>
+      <a href="{% url 'expense_list' %}" class="nav-link active"><span class="icon">💸</span> Transactions</a>
+      <a href="{% url 'expense_add' %}" class="nav-link"><span class="icon">➕</span> Add Transaction</a>
+    </div>
+    <div class="nav-section" style="margin-top:10px;">
+      <div class="nav-label">Manage</div>
+      <a href="{% url 'budget_list' %}" class="nav-link"><span class="icon">🎯</span> Budgets</a>
+      <a href="{% url 'category_list' %}" class="nav-link"><span class="icon">🏷️</span> Categories</a>
+      <a href="{% url 'reports' %}" class="nav-link"><span class="icon">📈</span> Reports</a>
+    </div>
+    <div class="sidebar-footer">
+      <form method="POST" action="{% url 'logout' %}">
+  {% csrf_token %}
+  <button type="submit" class="nav-link" style="background:none;border:none;width:100%;text-align:left;">
+    🚪 Sign out
+  </button>
+</form>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1>Transactions</h1>
+        <p>{{ start|date:"M j" }} — {{ end|date:"M j, Y" }}</p>
+      </div>
+      <a href="{% url 'expense_add' %}" class="btn btn-primary">+ Add Transaction</a>
+    </div>
+
+    {% if messages %}
+      <div class="msgs">
+        {% for message in messages %}
+          <div class="msg {{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <!-- Summary -->
+    <div class="summary">
+      <div class="pill">
+        <span class="pill-label">Total Income</span>
+        <span class="pill-value inc">+₹{{ total_income|floatformat:0 }}</span>
+      </div>
+      <div class="pill">
+        <span class="pill-label">Total Expenses</span>
+        <span class="pill-value exp">−₹{{ total_expenses|floatformat:0 }}</span>
+      </div>
+      <!-- <div class="pill">
+        <span class="pill-label">Net</span>
+        <span class="pill-value" style="color:var(--text)">₹{{ total_income|add:"-"|add:total_expenses|floatformat:0 }}</span>
+      </div> -->
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-bar">
+      <form method="GET" class="filter-form" id="filterForm">
+        <div class="filter-group">
+          <label>Period</label>
+          <select name="period" onchange="toggleCustom(this.value)">
+            <option value="this_month"   {% if request.GET.period == 'this_month' or not request.GET.period %}selected{% endif %}>This Month</option>
+            <option value="last_month"   {% if request.GET.period == 'last_month' %}selected{% endif %}>Last Month</option>
+            <option value="last_3_months"{% if request.GET.period == 'last_3_months' %}selected{% endif %}>Last 3 Months</option>
+            <option value="this_year"    {% if request.GET.period == 'this_year' %}selected{% endif %}>This Year</option>
+            <option value="custom"       {% if request.GET.period == 'custom' %}selected{% endif %}>Custom Range</option>
+          </select>
+        </div>
+        <div class="filter-group" id="customDates" style="display:{% if request.GET.period == 'custom' %}flex{% else %}none{% endif %}; flex-direction:row; gap:8px;">
+          <div class="filter-group">
+            <label>From</label>
+            <input type="date" name="start_date" value="{{ request.GET.start_date }}"/>
+          </div>
+          <div class="filter-group">
+            <label>To</label>
+            <input type="date" name="end_date" value="{{ request.GET.end_date }}"/>
+          </div>
+        </div>
+        <div class="filter-group">
+          <label>Type</label>
+          <select name="type">
+            <option value="">All Types</option>
+            <option value="expense" {% if request.GET.type == 'expense' %}selected{% endif %}>Expense</option>
+            <option value="income"  {% if request.GET.type == 'income' %}selected{% endif %}>Income</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Search</label>
+          <input type="text" name="search" placeholder="Title or note…" value="{{ search }}"/>
+        </div>
+        <div class="filter-actions">
+          <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+          <a href="{% url 'expense_list' %}" class="btn btn-ghost btn-sm">Reset</a>
+        </div>
+      </form>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrap">
+      {% if expenses %}
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Title</th>
+              <th>Category</th>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for expense in expenses %}
+              <tr>
+                <td style="color:var(--muted);">{{ expense.date|date:"M j, Y" }}</td>
+                <td>
+                  {{ expense.title }}
+                  {% if expense.description %}
+                    <div style="font-size:11px;color:var(--muted);margin-top:2px;">{{ expense.description|truncatechars:40 }}</div>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if expense.category %}
+                    <span class="cat-badge" style="border-color:{{ expense.category.color }}44;">
+                      {{ expense.category.icon }} {{ expense.category.name }}
+                    </span>
+                  {% else %}
+                    <span style="color:var(--muted); font-size:12px;">—</span>
+                  {% endif %}
+                </td>
+                <td><span class="type-badge {{ expense.type }}">{{ expense.get_type_display }}</span></td>
+                <td>
+                  <span class="amount {% if expense.type == 'income' %}pos{% else %}neg{% endif %}">
+                    {% if expense.type == 'income' %}+{% else %}−{% endif %}₹{{ expense.amount|floatformat:2 }}
+                  </span>
+                </td>
+                <td>
+                  <div class="td-actions">
+                    <a href="{% url 'expense_edit' expense.pk %}" class="btn btn-ghost btn-sm">Edit</a>
+                    <a href="{% url 'expense_delete' expense.pk %}" class="btn btn-danger btn-sm">Delete</a>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="empty">
+          <div class="empty-icon">📭</div>
+          No transactions found for this period.<br>
+          <a href="{% url 'expense_add' %}" style="color:var(--accent); margin-top:8px; display:inline-block;">Add your first transaction →</a>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Pagination -->
+    {% if expenses.has_other_pages %}
+      <div class="pagination">
+        {% if expenses.has_previous %}
+          <a href="?{% if request.GET.period %}period={{ request.GET.period }}&{% endif %}{% if search %}search={{ search }}&{% endif %}page={{ expenses.previous_page_number }}" class="page-btn">← Prev</a>
+        {% endif %}
+        {% for num in expenses.paginator.page_range %}
+          {% if expenses.number == num %}
+            <span class="page-btn current">{{ num }}</span>
+          {% elif num > expenses.number|add:'-3' and num < expenses.number|add:'3' %}
+            <a href="?{% if request.GET.period %}period={{ request.GET.period }}&{% endif %}{% if search %}search={{ search }}&{% endif %}page={{ num }}" class="page-btn">{{ num }}</a>
+          {% endif %}
+        {% endfor %}
+        {% if expenses.has_next %}
+          <a href="?{% if request.GET.period %}period={{ request.GET.period }}&{% endif %}{% if search %}search={{ search }}&{% endif %}page={{ expenses.next_page_number }}" class="page-btn">Next →</a>
+        {% endif %}
+      </div>
+      <p class="page-info" style="text-align:center;margin-top:10px;">Page {{ expenses.number }} of {{ expenses.paginator.num_pages }} · {{ expenses.paginator.count }} transactions</p>
+    {% endif %}
+  </main>
+</div>
+<script>
+  function toggleCustom(val) {
+    document.getElementById('customDates').style.display = val === 'custom' ? 'flex' : 'none';
+  }
+</script>
+</body>
+</html>
